@@ -35,7 +35,6 @@
   }
   h1,h2,h3,.display{font-family:'Kanit',sans-serif;}
 
-  /* ---------- Hero ---------- */
   .hero{position:relative; padding:56px 20px 70px; text-align:center; overflow:hidden;}
   .stars{position:absolute; inset:0; pointer-events:none;}
   .stars span{
@@ -70,7 +69,6 @@
   }
   .setup-banner code{background:rgba(0,0,0,.25); padding:2px 6px; border-radius:5px; font-size:12.5px;}
 
-  /* ---------- Form card ---------- */
   .form-card{
     background:var(--paper); color:var(--ink); border-radius:var(--radius);
     padding:30px clamp(18px,4vw,40px); box-shadow:var(--shadow); position:relative;
@@ -81,7 +79,7 @@
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
   @media(max-width:640px){.grid2{grid-template-columns:1fr;}}
   label{display:block; font-weight:600; font-size:14px; margin-bottom:6px; color:var(--ink);}
-  input[type=text], input[type=password], select, textarea{
+  input[type=text], select, textarea{
     width:100%; font-family:'Sarabun',sans-serif; font-size:15px;
     padding:11px 13px; border-radius:10px; border:1.5px solid var(--paper-line);
     background:#FFFEFB; color:var(--ink); outline:none; transition:border-color .15s;
@@ -113,13 +111,11 @@
   .btn-danger:hover{background:rgba(255,107,91,.28);}
   .btn-small{padding:8px 14px; font-size:13px; border-radius:9px;}
 
-  /* ---------- Toolbar ---------- */
   .toolbar{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin:44px 0 22px;}
   .toolbar h2{margin:0; font-size:22px;}
   .toolbar .count{color:var(--gold); font-weight:600;}
   .actions{display:flex; flex-wrap:wrap; gap:10px;}
 
-  /* ---------- Gallery: open-book cards ---------- */
   .gallery{display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:26px;}
   .empty{
     grid-column:1/-1; text-align:center; padding:50px 20px; color:#B9C0DA;
@@ -156,7 +152,6 @@
   .del-btn{background:none; border:none; color:#C97A6F; font-size:12.5px; cursor:pointer; padding:4px 6px;}
   .del-btn:hover{color:var(--coral);}
 
-  /* ---------- Modal ---------- */
   .modal-bg{display:none; position:fixed; inset:0; background:rgba(15,20,40,.72); z-index:50; align-items:center; justify-content:center; padding:20px;}
   .modal-bg.show{display:flex;}
   .modal{
@@ -170,7 +165,6 @@
   .modal .story-full{white-space:pre-wrap; line-height:1.85; font-size:15px;}
   .modal-close{position:absolute; top:14px; right:16px; background:rgba(0,0,0,.35); color:#fff; border:none; width:34px; height:34px; border-radius:50%; font-size:18px; cursor:pointer; z-index:5;}
 
-  /* ---------- Toast ---------- */
   #toast{
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
     background:var(--night-900); color:var(--paper); border:1px solid var(--gold);
@@ -181,7 +175,6 @@
 
   footer{text-align:center; color:#8791B3; font-size:12.5px; padding:24px;}
 
-  /* ---------- Print ---------- */
   #printArea{display:none;}
   @media print{
     body *{visibility:hidden;}
@@ -210,7 +203,6 @@
   <div class="setup-banner" id="setupBanner" style="display:none;">
     ⚠️ ยังไม่ได้ตั้งค่าการเชื่อมต่อ Google Sheets — เปิดไฟล์นี้ด้วยโปรแกรมแก้ไขข้อความ แล้วแก้ค่า
     <code>GAS_URL</code> ในส่วนต้นของโค้ด (แท็ก &lt;script&gt;) ให้เป็น Web app URL ที่ได้จากการ Deploy Google Apps Script
-    (ดูขั้นตอนในไฟล์ <code>Code.gs</code> ที่แนบมาด้วย)
   </div>
 
   <div class="form-card">
@@ -288,81 +280,25 @@
 <script>
 /* =========================================================
    ตั้งค่าการเชื่อมต่อ Google Apps Script
-   นำ Web app URL ที่ได้จากการ Deploy มาใส่แทนค่าด้านล่างนี้
    ========================================================= */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwtgY17J4atQjIqVYoYbEeULlguxqU-QCQMIuuyVrUmtB3YmEy90dHo9Ww_nxT-dKvP/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbypf-sQPKzNEew3jB2OsSaIYUgkXDt5xpaIZMx02O9TO3nh0WkwQGUktJtCnaiSNRTV/exec';
 
 const isConfigured = GAS_URL && GAS_URL.indexOf('https://script.google.com') === 0;
 
-/* ---------------- API layer (JSONP + hidden-iframe form to avoid CORS) ---------------- */
-function jsonp(url){
-  return new Promise((resolve, reject)=>{
-    const cbName = 'jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random()*100000);
-    const script = document.createElement('script');
-    let settled = false;
-    window[cbName] = (data)=>{
-      if(settled) return;
-      settled = true;
-      resolve(data);
-      delete window[cbName];
-      script.remove();
-    };
-    script.onerror = ()=>{
-      if(settled) return;
-      settled = true;
-      reject(new Error('jsonp failed'));
-      delete window[cbName];
-      script.remove();
-    };
-    script.src = url + (url.indexOf('?')>-1 ? '&' : '?') + 'callback=' + cbName;
-    document.body.appendChild(script);
-    setTimeout(()=>{
-      if(settled) return;
-      settled = true;
-      reject(new Error('jsonp timeout'));
-      delete window[cbName];
-      script.remove();
-    }, 20000);
-  });
-}
-
-function formPost(payload){
-  return new Promise((resolve)=>{
-    const frameName = 'hiddenFrame_' + Date.now() + '_' + Math.floor(Math.random()*1000);
-    const iframe = document.createElement('iframe');
-    iframe.name = frameName;
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = GAS_URL;
-    form.target = frameName;
-    form.style.display = 'none';
-
-    Object.keys(payload).forEach(function(key){
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = payload[key] == null ? '' : String(payload[key]);
-      form.appendChild(input);
-    });
-    document.body.appendChild(form);
-    form.submit();
-
-    setTimeout(function(){
-      form.remove();
-      iframe.remove();
-      resolve();
-    }, 1500);
-  });
-}
-
+/* ---------------- API layer (plain fetch) ---------------- */
 async function apiList(){
-  return jsonp(`${GAS_URL}?action=list&t=${Date.now()}`);
+  const res = await fetch(`${GAS_URL}?action=list&t=${Date.now()}`);
+  if(!res.ok) throw new Error('network');
+  return res.json();
 }
 async function apiPost(payload){
-  return formPost(payload);
+  const res = await fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error('network');
+  return res.json();
 }
 
 /* ---------------- Helpers ---------------- */
@@ -380,7 +316,6 @@ function setConn(state, text){
   document.getElementById('connText').textContent = text;
 }
 
-/* image: load once, export at decreasing quality until it fits a Sheets cell safely */
 function loadImage_(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -407,7 +342,7 @@ async function compressImage(file){
   let maxW=800, quality=0.7;
   let dataUrl = exportAt_(img, maxW, quality);
   let tries=0;
-  const LIMIT = 42000; // ปลอดภัยกว่าขีดจำกัด 50,000 ตัวอักษรต่อเซลล์ของ Google Sheets
+  const LIMIT = 42000;
   while(dataUrl.length > LIMIT && tries < 6){
     quality = Math.max(0.35, quality - 0.1);
     maxW = Math.max(300, maxW - 100);
@@ -476,38 +411,18 @@ function openModal(id){
 function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
 
 /* ---------------- Actions ---------------- */
-let isLoadingList = false;
 async function loadAll(showToast){
-  if(isLoadingList) return;
-  isLoadingList = true;
-  const hadStoriesBefore = stories.length > 0;
   try{
     setConn('wait','กำลังโหลดข้อมูล...');
-    let data, lastErr;
-    const delays = [0, 1200, 2500];
-    for(let i=0;i<delays.length;i++){
-      if(delays[i]) await new Promise(r=>setTimeout(r,delays[i]));
-      try{
-        data = await apiList();
-        lastErr = null;
-        break;
-      }catch(e){ lastErr = e; }
-    }
-    if(lastErr) throw lastErr;
+    const data = await apiList();
     stories = Array.isArray(data) ? data : [];
     render();
     setConn('ok','เชื่อมต่อ Google Sheets แล้ว');
     if(showToast) toast('อัปเดตข้อมูลล่าสุดแล้ว');
   }catch(err){
-    setConn('err','รีเฟรชล่าสุดไม่สำเร็จ (ข้อมูลเดิมยังอยู่)');
-    if(hadStoriesBefore){
-      toast('รีเฟรชไม่สำเร็จ ลองกดรีเฟรชอีกครั้ง (ข้อมูลเดิมยังอยู่ครบ)');
-    }else{
-      document.getElementById('gallery').innerHTML =
-        '<div class="empty">ไม่สามารถโหลดข้อมูลได้ กรุณากดปุ่มรีเฟรชอีกครั้ง</div>';
-    }
-  }finally{
-    isLoadingList = false;
+    setConn('err','เชื่อมต่อไม่สำเร็จ');
+    document.getElementById('gallery').innerHTML =
+      '<div class="empty">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบว่าตั้งค่า GAS_URL ถูกต้อง และเชื่อมต่ออินเทอร์เน็ตอยู่</div>';
   }
 }
 
@@ -525,7 +440,8 @@ async function submitStory(){
 
   btn.disabled=true; btn.textContent='กำลังส่ง...';
   try{
-    await apiPost({ name, cls, title, group, story, image: pendingImage || '' });
+    const result = await apiPost({ name, cls, title, group, story, image: pendingImage || '' });
+    if(result.status !== 'ok') throw new Error(result.message || 'submit failed');
     toast('ส่งนิทานสำเร็จแล้ว! 🎉');
     document.getElementById('fName').value='';
     document.getElementById('fClass').value='';
@@ -547,10 +463,10 @@ async function deleteStory(id){
   const pin = window.prompt('กรุณาใส่รหัสผ่านครูเพื่อยืนยันการลบ');
   if(pin===null) return;
   try{
-    await apiPost({ action:'delete', id, pin });
+    const result = await apiPost({ action:'delete', id, pin });
+    if(result.status!=='ok'){ toast(result.message || 'ลบไม่สำเร็จ'); return; }
+    toast('ลบนิทานแล้ว');
     await loadAll();
-    const stillThere = stories.some(s=>s.id===id);
-    toast(stillThere ? 'ลบไม่สำเร็จ กรุณาตรวจสอบรหัสผ่านครู' : 'ลบนิทานแล้ว');
   }catch(err){ toast('เกิดข้อผิดพลาด กรุณาลองใหม่'); }
 }
 
@@ -559,9 +475,10 @@ async function clearAll(){
   const pin = window.prompt('พิมพ์รหัสผ่านครูเพื่อยืนยันการลบข้อมูลทั้งหมด (การกระทำนี้ไม่สามารถย้อนกลับได้)');
   if(pin===null) return;
   try{
-    await apiPost({ action:'clearAll', pin });
+    const result = await apiPost({ action:'clearAll', pin });
+    if(result.status!=='ok'){ toast(result.message || 'ลบไม่สำเร็จ'); return; }
+    toast('ลบข้อมูลทั้งหมดแล้ว');
     await loadAll();
-    toast(stories.length===0 ? 'ลบข้อมูลทั้งหมดแล้ว' : 'ลบไม่สำเร็จ กรุณาตรวจสอบรหัสผ่านครู');
   }catch(err){ toast('เกิดข้อผิดพลาด กรุณาลองใหม่'); }
 }
 
@@ -633,7 +550,7 @@ if(!isConfigured){
   document.getElementById('gallery').innerHTML='<div class="empty">กรุณาตั้งค่า GAS_URL ก่อนใช้งาน (ดูคำแนะนำด้านบน)</div>';
 } else {
   loadAll();
-  setInterval(()=>loadAll(false), 30000); // รีเฟรชอัตโนมัติทุก 30 วินาที
+  setInterval(()=>loadAll(false), 30000);
 }
 </script>
 </body>
