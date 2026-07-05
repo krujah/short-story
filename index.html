@@ -480,24 +480,32 @@ let isLoadingList = false;
 async function loadAll(showToast){
   if(isLoadingList) return;
   isLoadingList = true;
+  const hadStoriesBefore = stories.length > 0;
   try{
     setConn('wait','กำลังโหลดข้อมูล...');
-    let data;
-    try{
-      data = await apiList();
-    }catch(firstErr){
-      // เครือข่ายหรือ Apps Script อาจตอบช้าเป็นครั้งคราว ลองใหม่อีกครั้งก่อนแจ้ง error
-      await new Promise(r=>setTimeout(r,1200));
-      data = await apiList();
+    let data, lastErr;
+    const delays = [0, 1200, 2500];
+    for(let i=0;i<delays.length;i++){
+      if(delays[i]) await new Promise(r=>setTimeout(r,delays[i]));
+      try{
+        data = await apiList();
+        lastErr = null;
+        break;
+      }catch(e){ lastErr = e; }
     }
+    if(lastErr) throw lastErr;
     stories = Array.isArray(data) ? data : [];
     render();
     setConn('ok','เชื่อมต่อ Google Sheets แล้ว');
     if(showToast) toast('อัปเดตข้อมูลล่าสุดแล้ว');
   }catch(err){
-    setConn('err','เชื่อมต่อไม่สำเร็จ');
-    document.getElementById('gallery').innerHTML =
-      '<div class="empty">ไม่สามารถโหลดข้อมูลได้ กรุณากดปุ่มรีเฟรชอีกครั้ง หรือตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</div>';
+    setConn('err','รีเฟรชล่าสุดไม่สำเร็จ (ข้อมูลเดิมยังอยู่)');
+    if(hadStoriesBefore){
+      toast('รีเฟรชไม่สำเร็จ ลองกดรีเฟรชอีกครั้ง (ข้อมูลเดิมยังอยู่ครบ)');
+    }else{
+      document.getElementById('gallery').innerHTML =
+        '<div class="empty">ไม่สามารถโหลดข้อมูลได้ กรุณากดปุ่มรีเฟรชอีกครั้ง</div>';
+    }
   }finally{
     isLoadingList = false;
   }
